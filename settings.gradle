@@ -11,4 +11,4 @@ plugins {
 }
 
 rootProject.name = 'java-box-utils'
-include('app')
+include('reporter')
