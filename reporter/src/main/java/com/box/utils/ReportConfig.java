@@ -16,7 +16,7 @@ public class ReportConfig {
     @JsonProperty("scope")
     protected String scope;
 
-    @JsonProperty("eid")
+    @JsonProperty("enterprise_id")
     protected String eid;
 
     @JsonProperty("from")

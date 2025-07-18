@@ -24,7 +24,7 @@ public class Reporter {
 
         ArgumentParser parser = ArgumentParsers.newFor("reporter").build();
         // Add Argument
-        parser.addArgument("-c", "--config")
+        parser.addArgument("-c", "--client")
                 .required(true)
                 .help("Client configuration file path")
                 .type(Arguments.fileType().verifyCanRead());
@@ -57,7 +57,7 @@ public class Reporter {
 
     public Reporter(Namespace arg0) throws IOException {
         // Initialize the reporter with the provided arguments
-        File configFile = arg0.get("config");
+        File configFile = arg0.get("client");
         File reportConfigFile = arg0.get("report");
         File outputFile = arg0.get("output");
 

@@ -52,13 +52,21 @@ private ReportWriter writer;
     }
 
     public void runQuery() throws IOException {
+        System.out.println("Running query for report: ");
         // Implement the logic to run the query against the Box API
         // This is a placeholder for actual query execution logic
         String newMarker = null;
 
         MetadataQueryBuilder builder = new MetadataQuery.MetadataQueryBuilder(reportConfig.getFrom(), reportConfig.ancestorFolderId);
-        builder.query(reportConfig.query);
-        builder.queryParams(reportConfig.queryParams);
+        if (reportConfig.query != null && !reportConfig.query.isEmpty()) {
+            builder.query(reportConfig.query);
+        } 
+        if (reportConfig.queryParams != null && !reportConfig.queryParams.isEmpty()) {
+            builder.queryParams(reportConfig.queryParams);
+        }
+        if (reportConfig.orderBy != null && !reportConfig.orderBy.isEmpty()) {
+            builder.orderBy(reportConfig.orderBy);
+        }
         builder.fields(reportConfig.getAllFields());
         MetadataQueryResults results = client.getSearch().searchByMetadataQuery(builder.build());
         if (results.getEntries() != null) {
@@ -66,7 +74,7 @@ private ReportWriter writer;
             for (FileFullOrFolderFull entry : entries) {
                 FileFull fileFull = entry.getFileFull();
                 if (null != fileFull) {
-                    Object[] entryValues = new Array[reportConfig.getAllFields().size()];
+                    Object[] entryValues = new Object[reportConfig.getAllFields().size()];
                     // Initialize the entryValues array with nulls
                     for (int i = 0; i < entryValues.length; i++) {
                         entryValues[i] = null;
@@ -75,6 +83,7 @@ private ReportWriter writer;
                     for (int i = 0; i < reportConfig.fileProperties.length; i++) {
                         String propName = reportConfig.fileProperties[i];
                         Object propValue = jsonNodeToObject(fileFull.getRawData().get(propName));
+                        System.out.println("Property: " + propName + " - Value: " + propValue + " - Index: " + i);
                         entryValues[i] = propValue;
                     }
                     // now fill in the metadata fields
@@ -84,7 +93,12 @@ private ReportWriter writer;
                         for (int i = 0; i < reportConfig.fields.length; i++) {
                             String fieldName = reportConfig.fields[i];
                             Map<String,Object> metadataFields = metadata.getExtraData();
-                            entryValues[i + reportConfig.fileProperties.length] = metadataFields.get(fieldName);
+                            if (null != metadataFields) {
+                                entryValues[i + reportConfig.fileProperties.length] = metadataFields.get(fieldName);
+                            }
+                            else {
+                                entryValues[i + reportConfig.fileProperties.length] = null;
+                            }
                         }
                     }
                     writer.writeRecord(entryValues);
@@ -94,6 +108,7 @@ private ReportWriter writer;
                 }
             }
         }
+        writer.close();
     }
 }
 

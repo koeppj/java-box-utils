@@ -8,7 +8,7 @@
       "mainClass": "com.box.utils.Reporter",
       "projectName": "reporter",
       "cwd": "${workspaceFolder}/reporter/test",
-      "args": "--output output/output.csv",
+      "args": "--output output/output.csv --report etc/report-config.json --client etc/boxapp-config.json",
       "preLaunchTask": "gradle: compileJava"
     }
   ]

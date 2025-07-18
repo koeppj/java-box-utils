@@ -42,7 +42,7 @@ java {
 
 application {
     // Define the main class for the application.
-    mainClass = 'java.box.utils.Reporter'
+    mainClass = 'com.box.utils.Reporter'
 }
 
 tasks.named('test') {

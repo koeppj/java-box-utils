@@ -1,0 +1,11 @@
+id,name,size,created_at,modified_at,externalPartyName,contractType,endDate,autoRenew,lawyer,riskLevel
+1643118602195,Qualcomm NDA 12-15-2016.pdf,58434.0,2024-09-09T10:22:08-07:00,2024-09-09T10:22:08-07:00,Apple,Amendment,2024-07-15T00:00:00.000Z,Yes,Karl Jones,Normal
+1643122647851,Pacific Gas and Electric Master Agreement 12-15-2015.pdf,54674.0,2024-09-09T10:22:06-07:00,2024-09-09T10:22:06-07:00,Apple,Master Agreement,2024-07-27T00:00:00.000Z,Yes,Tony Clark,Normal
+1643119288008,Pacific Gas and Electric NDA 12-15-2014.pdf,58434.0,2024-09-09T10:22:08-07:00,2024-09-09T10:22:08-07:00,Cross_Insurance,Sales Agreement,2025-07-31T00:00:00.000Z,Yes,Tony Clark,Normal
+1643101624176,Mutual Non Disclosure Agreement .pdf,235592.0,2024-09-09T10:22:07-07:00,2024-09-09T10:22:07-07:00,Merrill_Lynch,Master Agreement,2024-08-21T00:00:00.000Z,Yes,Darren Daniels,Extreme
+1643107727705,Qualcomm Master Agreement 09-15-2016.pdf,125777.0,2024-09-09T10:22:08-07:00,2024-09-09T10:22:08-07:00,Microsoft,Master Agreement,2024-08-01T00:00:00.000Z,Yes,Darren Daniels,Normal
+1643115954415,General Electric 01-01-2010.pdf,61933.0,2024-09-09T10:22:05-07:00,2024-09-09T10:22:05-07:00,Pacific_Gas_and_Electric,Master Agreement,2024-12-08T00:00:00.000Z,Yes,Karl Jones,Normal
+1643108509212," Increo Standard Disclosure Statement.pdf",65780.0,2024-09-09T10:22:04-07:00,2024-09-09T10:22:04-07:00,Qualcomm,Amendment,2024-12-29T00:00:00.000Z,Yes,Karl Jones,Normal
+1643108932487,Apple MSA 01-01-2010 Chad.pdf,9752.0,2024-09-09T10:22:04-07:00,2024-09-09T10:22:04-07:00,Qualcomm,Non Disclosure Agreement,2024-12-29T00:00:00.000Z,Yes,Tony Clark,Normal
+1643115311428,Apple NDA 12-15-2016.pdf,62741.0,2024-09-09T10:22:04-07:00,2024-09-09T10:22:04-07:00,Qualcomm,Amendment,2024-12-29T00:00:00.000Z,Yes,Tony Clark,Normal
+1643118700668,Qualcomm Master Agreement 12-15-2016 Addendum #2.pdf,13797.0,2024-09-09T10:22:08-07:00,2024-09-09T10:22:08-07:00,Qualcomm,Master Agreement,2024-09-10T00:00:00.000Z,Yes,Karl Jones,Normal
