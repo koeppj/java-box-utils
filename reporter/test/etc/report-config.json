@@ -1,0 +1,21 @@
+{
+    "scope": "enterprise",
+    "enterprise_id": "1206764763",
+    "from": "title_docs",
+    "ancestor_folder_id": "0",
+    "query": "select id, name, size, created_at, modified_at from file",
+    "file_properties": [
+        "id",
+        "name",
+        "size",
+        "created_at",
+        "modified_at"
+    ],
+    "fields": [
+        "id",
+        "name",
+        "size",
+        "created_at",
+        "modified_at"
+    ]
+}
