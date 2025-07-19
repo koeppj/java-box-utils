@@ -8,6 +8,7 @@
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
     id 'application'
+    id 'distribution'
 }
 
 repositories {
@@ -17,6 +18,21 @@ repositories {
 
 configurations {
     runOnly
+}
+
+distributions {
+    main {
+        contents {
+            from("$projectDir/test/etc") {
+                include("*.sample","README.md")
+                into('etc')
+            }
+            from("$projectDir/test/output") {
+                include("README.md")
+                into('output')
+            }
+        }
+    }
 }
 
 dependencies {
@@ -31,6 +47,7 @@ dependencies {
     implementation 'net.sourceforge.argparse4j:argparse4j:0.9.0'
     implementation 'org.apache.commons:commons-csv:1.14.0'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.2'
+    implementation 'org.slf4j:slf4j-nop:2.0.16'
 }
 
 // Apply a specific Java toolchain to ease working on different environments.

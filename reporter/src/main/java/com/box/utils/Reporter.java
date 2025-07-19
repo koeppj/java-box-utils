@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.stream.Stream;
 
+import com.box.sdkgen.box.errors.BoxAPIError;
 import com.box.sdkgen.box.jwtauth.BoxJWTAuth;
 import com.box.sdkgen.box.jwtauth.JWTConfig;
 import com.box.sdkgen.client.BoxClient;
@@ -43,11 +44,17 @@ public class Reporter {
                 Reporter reporter = new Reporter(ns);// Process the input file and generate report
                 reporter.runReport();
         } catch (ArgumentParserException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                parser.handleError(e);
+        } catch (BoxAPIError e) {
+                System.err.println("Box API Error: " + e.getResponseInfo().getBody());
         } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                System.err.println("IO Error: " + e.getMessage());
+        } catch (IllegalArgumentException e) {
+                System.err.println("Invalid Argument: " + e.getMessage());
+        } catch (NullPointerException e) {
+                System.err.println("Null Pointer Exception: " + e.getMessage());
+        } catch (Exception e) {
+                System.err.println("Error running reporter: " + e.getMessage());
         }
     }
 
@@ -69,11 +76,10 @@ public class Reporter {
         ReportConfig reportConfig = ReportConfig.fromConfigFile(reportConfigFile);
 
         String[] reportHeaders = Stream.concat(
-                        Stream.of(reportConfig.fileProperties), 
-                        Stream.of(reportConfig.fields)
+                        Stream.of(reportConfig.getFileProperties()), 
+                        Stream.of(reportConfig.getFields())
                 ).toArray((String[]::new));
 
         this.reportRunner = new ReportRunner(reportConfig, client, new ReportWriter(outputFile, reportHeaders));
-        
     }
 }

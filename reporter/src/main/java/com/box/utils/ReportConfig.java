@@ -6,50 +6,88 @@ import java.io.File;
 import java.io.IOException;
 
 import com.box.sdkgen.schemas.metadataquery.MetadataQueryOrderByField;
-import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.exc.StreamReadException;
+import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-@JsonFilter("nullablePropertyFilder")
 public class ReportConfig {
+    @JsonProperty(value = "scope", required = true)
+    private String scope;
 
-    @JsonProperty("scope")
-    protected String scope;
+    @JsonProperty(value = "enterprise_id", required = true)
+    private String eid;
 
-    @JsonProperty("enterprise_id")
-    protected String eid;
-
-    @JsonProperty("from")
-    protected String from;
+    @JsonProperty(value = "template", required = true)
+    private String template;
 
     @JsonProperty("ancestor_folder_id")
-    protected String ancestorFolderId;
+    private String ancestorFolderId = "0";
 
     @JsonProperty("query")
-    protected String query;
+    private String query;
 
     @JsonProperty("query_params")
-    protected Map<String,Object> queryParams;
+    private Map<String,Object> queryParams;
 
     @JsonProperty("file_properties")
-    protected String[] fileProperties;
+    private String[] fileProperties = {"id","name"};
 
-    @JsonProperty("metadata_fields")
-    protected String[] fields;
+    @JsonProperty(value = "metadata_fields", required = true)
+    private String[] fields;
 
     @JsonProperty("order_by")
-    protected List<MetadataQueryOrderByField> orderBy;
+    private List<MetadataQueryOrderByField> orderBy;
+
+    @JsonProperty("limit")
+    private Integer limit;
 
     public String getScope() {
         return scope;
     }  
     
+    public String getEid() {
+        return eid;
+    }
+
+    public String getTemplate() {
+        return template;
+    }
+
+    public String getAncestorFolderId() {
+        return ancestorFolderId;
+    }
+
+    public String getQuery() {
+        return query;
+    }
+
+    public Map<String, Object> getQueryParams() {
+        return queryParams;
+    }
+
+    public String[] getFileProperties() {
+        return fileProperties;
+    }
+
+    public String[] getFields() {
+        return fields;
+    }
+
+    public List<MetadataQueryOrderByField> getOrderBy() {
+        return orderBy;
+    }
+
     public String getScopeEid() {
         return scope.concat("_").concat(eid);
     }
 
     public String getFrom() {
-        return scope.concat("_").concat(eid).concat(".").concat(from);
+        return getScopeEid().concat(".").concat(template);
+    }
+
+    public Integer getLimit() {
+        return limit;
     }
 
     public List<String> getAllFields() {
@@ -68,14 +106,26 @@ public class ReportConfig {
         return result;
     }
 
-    public static ReportConfig fromConfigFile(File arg0) {
+    public static ReportConfig fromConfigFile(File arg0) throws StreamReadException, DatabindException, IOException {
         ObjectMapper mapper = new ObjectMapper();
-        try {
-            return mapper.readValue(arg0, ReportConfig.class);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to read config file: " + arg0, e);
-        }
+        ReportConfig reortConfig = mapper.readValue(arg0, ReportConfig.class);
+        reortConfig.validate();
+        return reortConfig;
     }
 
+    public void validate() throws IllegalArgumentException {
+        if (scope == null || scope.isEmpty()) {
+            throw new IllegalArgumentException("Missing required property: scope");
+        }
+        if (eid == null || eid.isEmpty()) {
+            throw new IllegalArgumentException("Missing required property: enterprise_id");
+        }
+        if (template == null || template.isEmpty()) {
+            throw new IllegalArgumentException("Missing required property: template");
+        }
+        if (fields == null || fields.length == 0) {
+            throw new IllegalArgumentException("Missing required property: metadata_fields");
+        }
+    }
 
 }

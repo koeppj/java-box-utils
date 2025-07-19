@@ -1,1 +1,5 @@
+*
 !.gitignore
+!REAADME.md
+!report-config.json.sample
+!boxapp-config.json.sample

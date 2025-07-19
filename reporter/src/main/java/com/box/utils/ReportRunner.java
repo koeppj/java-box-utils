@@ -1,7 +1,6 @@
 package com.box.utils;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.List;
 import java.util.Map;
 
@@ -27,7 +26,7 @@ private ReportWriter writer;
     }
 
     public String[] getFIelds() {
-        return reportConfig.fields;
+        return reportConfig.getFields();
     }
 
     private Object jsonNodeToObject(JsonNode node) {
@@ -57,58 +56,80 @@ private ReportWriter writer;
         // This is a placeholder for actual query execution logic
         String newMarker = null;
 
-        MetadataQueryBuilder builder = new MetadataQuery.MetadataQueryBuilder(reportConfig.getFrom(), reportConfig.ancestorFolderId);
-        if (reportConfig.query != null && !reportConfig.query.isEmpty()) {
-            builder.query(reportConfig.query);
+        MetadataQueryBuilder builder = new MetadataQuery.MetadataQueryBuilder(reportConfig.getFrom(), reportConfig.getAncestorFolderId());
+        if (reportConfig.getQuery() != null && !reportConfig.getQuery().isEmpty()) {
+            builder.query(reportConfig.getQuery());
         } 
-        if (reportConfig.queryParams != null && !reportConfig.queryParams.isEmpty()) {
-            builder.queryParams(reportConfig.queryParams);
+        if (reportConfig.getQueryParams() != null && !reportConfig.getQueryParams().isEmpty()) {
+            builder.queryParams(reportConfig.getQueryParams());
         }
-        if (reportConfig.orderBy != null && !reportConfig.orderBy.isEmpty()) {
-            builder.orderBy(reportConfig.orderBy);
+        if (reportConfig.getOrderBy() != null && !reportConfig.getOrderBy().isEmpty()) {
+            builder.orderBy(reportConfig.getOrderBy());
         }
         builder.fields(reportConfig.getAllFields());
-        MetadataQueryResults results = client.getSearch().searchByMetadataQuery(builder.build());
-        if (results.getEntries() != null) {
-            List<FileFullOrFolderFull> entries = results.getEntries();
-            for (FileFullOrFolderFull entry : entries) {
-                FileFull fileFull = entry.getFileFull();
-                if (null != fileFull) {
-                    Object[] entryValues = new Object[reportConfig.getAllFields().size()];
-                    // Initialize the entryValues array with nulls
-                    for (int i = 0; i < entryValues.length; i++) {
-                        entryValues[i] = null;
-                    }
-                    // first fill in the file properties
-                    for (int i = 0; i < reportConfig.fileProperties.length; i++) {
-                        String propName = reportConfig.fileProperties[i];
-                        Object propValue = jsonNodeToObject(fileFull.getRawData().get(propName));
-                        System.out.println("Property: " + propName + " - Value: " + propValue + " - Index: " + i);
-                        entryValues[i] = propValue;
-                    }
-                    // now fill in the metadata fields
-                    Map<String,MetadataFull> metadataForScope = fileFull.getMetadata().getExtraData().get(reportConfig.getScopeEid());
-                    MetadataFull metadata = metadataForScope.get(reportConfig.from);
-                    if (metadata != null) {
-                        for (int i = 0; i < reportConfig.fields.length; i++) {
-                            String fieldName = reportConfig.fields[i];
-                            Map<String,Object> metadataFields = metadata.getExtraData();
-                            if (null != metadataFields) {
-                                entryValues[i + reportConfig.fileProperties.length] = metadataFields.get(fieldName);
-                            }
-                            else {
-                                entryValues[i + reportConfig.fileProperties.length] = null;
+        boolean hasMore = true;
+        int count = 0;
+        while (hasMore) {
+            MetadataQueryResults results = client.getSearch().searchByMetadataQuery(builder.build());
+            if (results.getEntries() != null) {
+                List<FileFullOrFolderFull> entries = results.getEntries();
+                for (FileFullOrFolderFull entry : entries) {
+                    FileFull fileFull = entry.getFileFull();
+                    if (null != fileFull) {
+                        count++;
+                        if ((null != reportConfig.getLimit()) && (count >= reportConfig.getLimit())) {
+                            System.out.println("Reached the limit of " + reportConfig.getLimit() + " records. Stopping further processing.");
+                            hasMore = false;
+                            break;
+                        }
+                        if (count % 1000 == 0) {
+                            System.out.println("Processed " + count + " records so far...");
+                        }
+                        Object[] entryValues = new Object[reportConfig.getAllFields().size()];
+                        // Initialize the entryValues array with nulls
+                        for (int i = 0; i < entryValues.length; i++) {
+                            entryValues[i] = null;
+                        }
+                        // first fill in the file properties
+                        for (int i = 0; i < reportConfig.getFileProperties().length; i++) {
+                            String propName = reportConfig.getFileProperties()[i];
+                            Object propValue = jsonNodeToObject(fileFull.getRawData().get(propName));
+                            entryValues[i] = propValue;
+                        }
+                        // now fill in the metadata fields
+                        Map<String,MetadataFull> metadataForScope = fileFull.getMetadata().getExtraData().get(reportConfig.getScopeEid());
+                        MetadataFull metadata = metadataForScope.get(reportConfig.getTemplate());
+                        if (metadata != null) {
+                            for (int i = 0; i < reportConfig.getFields().length; i++) {
+                                String fieldName = reportConfig.getFields()[i];
+                                Map<String,Object> metadataFields = metadata.getExtraData();
+                                if (null != metadataFields) {
+                                    entryValues[i + reportConfig.getFileProperties().length] = metadataFields.get(fieldName);
+                                }
+                                else {
+                                    entryValues[i + reportConfig.getFileProperties().length] = null;
+                                }
                             }
                         }
+                        writer.writeRecord(entryValues);
+                    } else {
+                        // Handle folder entries if needed
+                        // For now, we are only processing file entries
                     }
-                    writer.writeRecord(entryValues);
-                } else {
-                    // Handle folder entries if needed
-                    // For now, we are only processing file entries
                 }
+                if (results.getNextMarker() != null) {
+                    newMarker = results.getNextMarker();
+                    builder.marker(newMarker);
+                } else {
+                    hasMore = false;
+                }
+            }
+            else {
+                hasMore = false;
             }
         }
         writer.close();
+        System.out.println("Query completed. Total records processed: " + count);
     }
 }
 
