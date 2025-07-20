@@ -12,11 +12,11 @@ import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ReportConfig {
-    @JsonProperty(value = "scope", required = true)
-    private String scope;
+    private String scope = "enterprise";
 
-    @JsonProperty(value = "enterprise_id", required = true)
     private String eid;
+
+    private String configFile;
 
     @JsonProperty(value = "template", required = true)
     private String template;
@@ -108,24 +108,28 @@ public class ReportConfig {
 
     public static ReportConfig fromConfigFile(File arg0) throws StreamReadException, DatabindException, IOException {
         ObjectMapper mapper = new ObjectMapper();
-        ReportConfig reortConfig = mapper.readValue(arg0, ReportConfig.class);
-        reortConfig.validate();
-        return reortConfig;
+        ReportConfig reportConfig = mapper.readValue(arg0, ReportConfig.class);
+        reportConfig.configFile = arg0.getAbsolutePath();
+        reportConfig.validate();
+        return reportConfig;
     }
 
     public void validate() throws IllegalArgumentException {
-        if (scope == null || scope.isEmpty()) {
-            throw new IllegalArgumentException("Missing required property: scope");
-        }
-        if (eid == null || eid.isEmpty()) {
-            throw new IllegalArgumentException("Missing required property: enterprise_id");
-        }
         if (template == null || template.isEmpty()) {
             throw new IllegalArgumentException("Missing required property: template");
         }
         if (fields == null || fields.length == 0) {
             throw new IllegalArgumentException("Missing required property: metadata_fields");
         }
+    }
+
+    public ReportConfig withEid(String eid) {
+        this.eid = eid;
+        return this;
+    }
+
+    public String getConfigFile() {
+        return configFile;
     }
 
 }

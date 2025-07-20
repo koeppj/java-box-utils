@@ -37,6 +37,10 @@ public class Reporter {
                 .required(true)
                 .help("Output file path")
                 .type(Arguments.fileType().verifyCanCreate());
+        parser.addArgument("-u", "--user")
+                .required(false)
+                .help("User ID to run the report for")
+                .type(String.class);
         
         Namespace ns;
         try {
@@ -72,8 +76,11 @@ public class Reporter {
         JWTConfig jwtConfig = JWTConfig.fromConfigFile(configFile.getAbsolutePath());
         BoxJWTAuth boxJWTAuth = new BoxJWTAuth(jwtConfig);
         BoxClient client = new BoxClient(boxJWTAuth);
+        if (arg0.get("user") != null) {
+            client = client.withAsUserHeader(arg0.getString("user"));
+        }
 
-        ReportConfig reportConfig = ReportConfig.fromConfigFile(reportConfigFile);
+        ReportConfig reportConfig = ReportConfig.fromConfigFile(reportConfigFile).withEid(jwtConfig.getEnterpriseId());
 
         String[] reportHeaders = Stream.concat(
                         Stream.of(reportConfig.getFileProperties()), 

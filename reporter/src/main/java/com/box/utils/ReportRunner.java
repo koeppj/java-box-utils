@@ -51,7 +51,7 @@ private ReportWriter writer;
     }
 
     public void runQuery() throws IOException {
-        System.out.println("Running query for report: ");
+        System.out.printf("Running query for report: %s%n", reportConfig.getConfigFile());
         // Implement the logic to run the query against the Box API
         // This is a placeholder for actual query execution logic
         String newMarker = null;
@@ -69,6 +69,7 @@ private ReportWriter writer;
         builder.fields(reportConfig.getAllFields());
         boolean hasMore = true;
         int count = 0;
+        builder.limit((long) 1000);
         while (hasMore) {
             MetadataQueryResults results = client.getSearch().searchByMetadataQuery(builder.build());
             if (results.getEntries() != null) {
@@ -78,12 +79,12 @@ private ReportWriter writer;
                     if (null != fileFull) {
                         count++;
                         if ((null != reportConfig.getLimit()) && (count >= reportConfig.getLimit())) {
-                            System.out.println("Reached the limit of " + reportConfig.getLimit() + " records. Stopping further processing.");
+                            System.out.printf("%nReached the limit of %,d records.  Stopping further processing.%n",reportConfig.getLimit());
                             hasMore = false;
                             break;
                         }
                         if (count % 1000 == 0) {
-                            System.out.println("Processed " + count + " records so far...");
+                            System.out.printf("\rProcessed %,d records so far...", count);
                         }
                         Object[] entryValues = new Object[reportConfig.getAllFields().size()];
                         // Initialize the entryValues array with nulls
