@@ -5,4 +5,4 @@
 build
 
 # Ignore .vscode workspace settings
-# .vscode
+.vscode
