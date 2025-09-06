@@ -25,5 +25,6 @@
         "autoRenew",
         "lawyer",
         "riskLevel"
-    ]
+    ],
+    "date_format": "yyyy-MM-dd'T'HH:mm"    
 }

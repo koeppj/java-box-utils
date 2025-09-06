@@ -85,6 +85,8 @@ See the sample report configuration file in this distro (./etc/report-config.jso
         "autoRenew",
         "lawyer",
         "riskLevel"
-    ]
+    ],
+    // Optional - Formatting string for Date Fields - Default is shown
+    "date_format": "yyyy-MM-dd'T'HH:mm:ssXXX"
 }
 ```
