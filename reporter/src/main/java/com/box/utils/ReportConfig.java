@@ -42,6 +42,13 @@ public class ReportConfig {
     @JsonProperty("limit")
     private Integer limit;
 
+    @JsonProperty("date_format")
+    private String dateFormat = "yyyy-MM-dd'T'HH:mm:ssXXX";
+
+    public String getDateFormat() {
+        return dateFormat;
+    }
+
     public String getScope() {
         return scope;
     }  

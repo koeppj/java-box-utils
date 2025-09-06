@@ -1,6 +1,4 @@
 {
-    "scope": "enterprise",
-    "enterprise_id": "1206764763",
     "template": "contract",
     "ancestor_folder_id": "0",
     "query": "autoRenew = :arg1",
