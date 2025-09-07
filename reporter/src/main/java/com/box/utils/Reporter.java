@@ -41,6 +41,13 @@ public class Reporter {
                 .required(false)
                 .help("User ID to run the report for")
                 .type(String.class);
+        parser.addArgument("--format", "-f")
+                .dest("format")
+                .type(Arguments.enumStringType(OutputFormat.class)) // replacement for enumType
+                .choices(OutputFormat.values())                                   // enforce allowed values
+                .setDefault(OutputFormat.CSV)
+                .help("Format of the output report")
+                .metavar("CSV|XLSX");
         
         Namespace ns;
         try {
@@ -71,6 +78,7 @@ public class Reporter {
         File configFile = arg0.get("client");
         File reportConfigFile = arg0.get("report");
         File outputFile = arg0.get("output");
+        OutputFormat format = (OutputFormat) arg0.get("format");
 
         // Box Client Initialization
         JWTConfig jwtConfig = JWTConfig.fromConfigFile(configFile.getAbsolutePath());
@@ -82,11 +90,6 @@ public class Reporter {
 
         ReportConfig reportConfig = ReportConfig.fromConfigFile(reportConfigFile).withEid(jwtConfig.getEnterpriseId());
 
-        String[] reportHeaders = Stream.concat(
-                        Stream.of(reportConfig.getFileProperties()), 
-                        Stream.of(reportConfig.getFields())
-                ).toArray((String[]::new));
-
-        this.reportRunner = new ReportRunner(reportConfig, client, new ReportWriter(outputFile, reportHeaders));
+        this.reportRunner = new ReportRunner(reportConfig, client, outputFile, format);
     }
 }

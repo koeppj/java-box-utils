@@ -31,6 +31,7 @@ Use to generate a CSV files based on a [metadata search](https://developer.box.c
 ```cmd
 > reporter --help
 usage: reporter [-h] -c CLIENT -r REPORT -o OUTPUT [-u USER]
+                [--format CSV|XLSX]
 
 named arguments:
   -h, --help             show this help message and exit
@@ -41,7 +42,8 @@ named arguments:
   -o OUTPUT, --output OUTPUT
                          Output file path
   -u USER, --user USER   User ID to run the report for
-```
+  --format CSV|XLSX, -f CSV|XLSX
+                         Format of the output report```
 
 ### Report Configuration Format
 

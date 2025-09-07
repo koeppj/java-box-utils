@@ -1,11 +1,15 @@
 package com.box.utils;
 
+import java.io.File;
 import java.io.IOException;
-import java.time.OffsetDateTime;
-import java.time.format.DateTimeFormatter;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
+import java.util.stream.Stream;
 
 import com.box.sdkgen.client.BoxClient;
 import com.box.sdkgen.managers.metadatatemplates.GetMetadataTemplateScope;
@@ -21,27 +25,42 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 public class ReportRunner {
 
-private ReportConfig reportConfig;
-private BoxClient client;
-private ReportWriter writer;
-private DateTimeFormatter  dateFormatter;
-private MetadataTemplate metadataTemplate;
-private Map<String,MetadataTemplateFieldsTypeField> metadataFieldTypes = new HashMap<String, MetadataTemplateFieldsTypeField>();
+    private ReportConfig reportConfig;
+    private BoxClient client;
+    private SimpleDateFormat dateFormatter;
+    private MetadataTemplate metadataTemplate;
+    private Map<String, MetadataTemplateFieldsTypeField> metadataFieldTypes = new HashMap<String, MetadataTemplateFieldsTypeField>();
+    private TabularWriter writer;
+    private OutputFormat outputFormat;
 
-    public ReportRunner(ReportConfig reportConfig, BoxClient client, ReportWriter writer) {
+    public ReportRunner(ReportConfig reportConfig, BoxClient client, File outputFile, OutputFormat format) throws IOException {
         this.reportConfig = reportConfig;
         this.client = client;
-        this.writer = writer;
-        this.dateFormatter = DateTimeFormatter.ofPattern(reportConfig.getDateFormat());
-        getMetadaTemplate();
+        this.dateFormatter = new SimpleDateFormat(reportConfig.getDateFormat());
+        this.dateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+        this.outputFormat = format;
+        setupMetadataFields();
+        setupWriter(outputFile);
     }
 
-    private void getMetadaTemplate() {
-        this.metadataTemplate = 
-            client.metadataTemplates.getMetadataTemplate(GetMetadataTemplateScope.ENTERPRISE,reportConfig.getTemplate());
-        metadataTemplate.getFields().forEach( field -> {
+    private void setupMetadataFields() {
+        this.metadataTemplate = client.metadataTemplates.getMetadataTemplate(GetMetadataTemplateScope.ENTERPRISE,
+                reportConfig.getTemplate());
+        metadataTemplate.getFields().forEach(field -> {
             this.metadataFieldTypes.put(field.getKey(), field.getType().getEnumValue());
         });
+    }
+
+    private void setupWriter(File outFile) throws IOException {
+        this.writer = switch (this.outputFormat) {
+            case CSV -> new CsvTabularWriter(outFile.toPath());
+            case XLSX -> new ExcelTabularWriter(outFile.toPath());
+        };
+        this.writer.start(this.reportConfig.getTemplate(),this.reportConfig.getDateFormat());
+        String[] reportHeaders = Stream.concat(
+                Stream.of(reportConfig.getFileProperties()),
+                Stream.of(reportConfig.getFields())).toArray((String[]::new));
+        this.writer.writeHeader(List.of(reportHeaders));
     }
 
     public String[] getFIelds() {
@@ -56,8 +75,8 @@ private Map<String,MetadataTemplateFieldsTypeField> metadataFieldTypes = new Has
                     return rawValue.toString();
                 case DATE:
                     if (rawValue instanceof String) {
-                        OffsetDateTime dateTime = OffsetDateTime.parse((String) rawValue);
-                        return this.dateFormatter.format(dateTime);
+                        Date date = Date.from(Instant.parse((String)rawValue));
+                        return this.outputFormat == OutputFormat.CSV ? this.dateFormatter.format(date) : date;
                     }
                     return rawValue;
                 case FLOAT:
@@ -87,11 +106,11 @@ private Map<String,MetadataTemplateFieldsTypeField> metadataFieldTypes = new Has
         } else if (node.isTextual()) {
             String text = node.asText();
             if (text.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?([+-]\\d{2}:\\d{2}|Z)")) {
-                OffsetDateTime dateTime = OffsetDateTime.parse(text);
-                return this.dateFormatter.format(dateTime);
+                Date date = Date.from(Instant.parse(text));
+                return this.outputFormat == OutputFormat.CSV ? this.dateFormatter.format(date) : date;
             } else if (text.matches("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z")) {
-                OffsetDateTime dateTime = OffsetDateTime.parse(text);
-                return this.dateFormatter.format(dateTime);
+                Date date = Date.from(Instant.parse(text));
+                return this.outputFormat == OutputFormat.CSV ? this.dateFormatter.format(date) : date;
             } else {
                 return text;
             }
@@ -117,10 +136,11 @@ private Map<String,MetadataTemplateFieldsTypeField> metadataFieldTypes = new Has
         // This is a placeholder for actual query execution logic
         String newMarker = null;
 
-        MetadataQueryBuilder builder = new MetadataQuery.MetadataQueryBuilder(reportConfig.getFrom(), reportConfig.getAncestorFolderId());
+        MetadataQueryBuilder builder = new MetadataQuery.MetadataQueryBuilder(reportConfig.getFrom(),
+                reportConfig.getAncestorFolderId());
         if (reportConfig.getQuery() != null && !reportConfig.getQuery().isEmpty()) {
             builder.query(reportConfig.getQuery());
-        } 
+        }
         if (reportConfig.getQueryParams() != null && !reportConfig.getQueryParams().isEmpty()) {
             builder.queryParams(reportConfig.getQueryParams());
         }
@@ -140,7 +160,8 @@ private Map<String,MetadataTemplateFieldsTypeField> metadataFieldTypes = new Has
                     if (null != fileFull) {
                         count++;
                         if ((null != reportConfig.getLimit()) && (count >= reportConfig.getLimit())) {
-                            System.out.printf("%nReached the limit of %,d records.  Stopping further processing.%n",reportConfig.getLimit());
+                            System.out.printf("%nReached the limit of %,d records.  Stopping further processing.%n",
+                                    reportConfig.getLimit());
                             hasMore = false;
                             break;
                         }
@@ -159,22 +180,22 @@ private Map<String,MetadataTemplateFieldsTypeField> metadataFieldTypes = new Has
                             entryValues[i] = propValue;
                         }
                         // now fill in the metadata fields
-                        Map<String,MetadataFull> metadataForScope = fileFull.getMetadata().getExtraData().get(reportConfig.getScopeEid());
+                        Map<String, MetadataFull> metadataForScope = fileFull.getMetadata().getExtraData()
+                                .get(reportConfig.getScopeEid());
                         MetadataFull metadata = metadataForScope.get(reportConfig.getTemplate());
                         if (metadata != null) {
                             for (int i = 0; i < reportConfig.getFields().length; i++) {
                                 String fieldName = reportConfig.getFields()[i];
-                                Map<String,Object> metadataFields = metadata.getExtraData();
+                                Map<String, Object> metadataFields = metadata.getExtraData();
                                 if (null != metadataFields) {
-                                    entryValues[i + reportConfig.getFileProperties().length] 
-                                        = this.getValueOfMetadataField(fieldName, metadataFields.get(fieldName));
-                                }
-                                else {
+                                    entryValues[i + reportConfig.getFileProperties().length] = this
+                                            .getValueOfMetadataField(fieldName, metadataFields.get(fieldName));
+                                } else {
                                     entryValues[i + reportConfig.getFileProperties().length] = null;
                                 }
                             }
                         }
-                        writer.writeRecord(entryValues);
+                        writer.writeRow(List.of(entryValues));
                     } else {
                         // Handle folder entries if needed
                         // For now, we are only processing file entries
@@ -186,8 +207,7 @@ private Map<String,MetadataTemplateFieldsTypeField> metadataFieldTypes = new Has
                 } else {
                     hasMore = false;
                 }
-            }
-            else {
+            } else {
                 hasMore = false;
             }
         }
@@ -195,5 +215,3 @@ private Map<String,MetadataTemplateFieldsTypeField> metadataFieldTypes = new Has
         System.out.println("Query completed. Total records processed: " + count);
     }
 }
-
-
