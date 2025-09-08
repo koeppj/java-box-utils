@@ -6,3 +6,6 @@ build
 
 # Ignore .vscode workspace settings
 .vscode
+
+# Ignore .DS_Store (Where did that come from!)
+**/.DS_Store
