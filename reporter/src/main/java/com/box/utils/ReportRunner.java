@@ -55,6 +55,7 @@ public class ReportRunner {
         this.writer = switch (this.outputFormat) {
             case CSV -> new CsvTabularWriter(outFile.toPath());
             case XLSX -> new ExcelTabularWriter(outFile.toPath());
+            default -> throw new IllegalArgumentException("Unsupported output format: " + this.outputFormat);
         };
         this.writer.start(this.reportConfig.getTemplate(),this.reportConfig.getDateFormat());
         String[] reportHeaders = Stream.concat(
@@ -191,7 +192,7 @@ public class ReportRunner {
                                     entryValues[i + reportConfig.getFileProperties().length] = this
                                             .getValueOfMetadataField(fieldName, metadataFields.get(fieldName));
                                 } else {
-                                    entryValues[i + reportConfig.getFileProperties().length] = null;
+                                    entryValues[i + reportConfig.getFileProperties().length] = this.outputFormat == OutputFormat.CSV ? null : "";
                                 }
                             }
                         }

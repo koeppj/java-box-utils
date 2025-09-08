@@ -5,7 +5,6 @@ package com.box.utils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.stream.Stream;
 
 import com.box.sdkgen.box.errors.BoxAPIError;
 import com.box.sdkgen.box.jwtauth.BoxJWTAuth;
@@ -64,6 +63,7 @@ public class Reporter {
                 System.err.println("Invalid Argument: " + e.getMessage());
         } catch (NullPointerException e) {
                 System.err.println("Null Pointer Exception: " + e.getMessage());
+                e.printStackTrace();
         } catch (Exception e) {
                 System.err.println("Error running reporter: " + e.getMessage());
         }
@@ -89,7 +89,6 @@ public class Reporter {
         }
 
         ReportConfig reportConfig = ReportConfig.fromConfigFile(reportConfigFile).withEid(jwtConfig.getEnterpriseId());
-
         this.reportRunner = new ReportRunner(reportConfig, client, outputFile, format);
     }
 }
