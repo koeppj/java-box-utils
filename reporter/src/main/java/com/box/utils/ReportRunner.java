@@ -189,8 +189,11 @@ public class ReportRunner {
                                 String fieldName = reportConfig.getFields()[i];
                                 Map<String, Object> metadataFields = metadata.getExtraData();
                                 if (null != metadataFields) {
-                                    entryValues[i + reportConfig.getFileProperties().length] = this
-                                            .getValueOfMetadataField(fieldName, metadataFields.get(fieldName));
+                                    Object fieldValue = getValueOfMetadataField(fieldName, metadataFields.get(fieldName));
+                                    if (null == fieldValue && this.outputFormat == OutputFormat.XLSX) {
+                                        fieldValue = "";
+                                    }
+                                    entryValues[i + reportConfig.getFileProperties().length] = fieldValue;
                                 } else {
                                     entryValues[i + reportConfig.getFileProperties().length] = this.outputFormat == OutputFormat.CSV ? null : "";
                                 }
