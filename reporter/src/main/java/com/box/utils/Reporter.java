@@ -6,6 +6,8 @@ package com.box.utils;
 import java.io.File;
 import java.io.IOException;
 
+import java.time.ZoneId;
+
 import com.box.sdkgen.box.errors.BoxAPIError;
 import com.box.sdkgen.box.jwtauth.BoxJWTAuth;
 import com.box.sdkgen.box.jwtauth.JWTConfig;
@@ -47,6 +49,11 @@ public class Reporter {
                 .setDefault(OutputFormat.CSV)
                 .help("Format of the output report")
                 .metavar("CSV|XLSX");
+        parser.addArgument("--timezone")
+                .type(new ZoneIdArgumentType())
+                .setDefault(ZoneId.systemDefault())
+                .help("Timezone ID (e.g. America/New_York). Defaults to system timezone.");
+
         
         Namespace ns;
         try {
@@ -78,6 +85,7 @@ public class Reporter {
         File configFile = arg0.get("client");
         File reportConfigFile = arg0.get("report");
         File outputFile = arg0.get("output");
+        ZoneId timezone = (ZoneId) arg0.get("timezone");
         OutputFormat format = (OutputFormat) arg0.get("format");
 
         // Box Client Initialization
@@ -89,6 +97,6 @@ public class Reporter {
         }
 
         ReportConfig reportConfig = ReportConfig.fromConfigFile(reportConfigFile).withEid(jwtConfig.getEnterpriseId());
-        this.reportRunner = new ReportRunner(reportConfig, client, outputFile, format);
+        this.reportRunner = new ReportRunner(reportConfig, client, outputFile, format, timezone);
     }
 }

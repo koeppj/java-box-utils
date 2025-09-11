@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -33,11 +34,11 @@ public class ReportRunner {
     private TabularWriter writer;
     private OutputFormat outputFormat;
 
-    public ReportRunner(ReportConfig reportConfig, BoxClient client, File outputFile, OutputFormat format) throws IOException {
+    public ReportRunner(ReportConfig reportConfig, BoxClient client, File outputFile, OutputFormat format, ZoneId zoneId) throws IOException {
         this.reportConfig = reportConfig;
         this.client = client;
         this.dateFormatter = new SimpleDateFormat(reportConfig.getDateFormat());
-        this.dateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
+        this.dateFormatter.setTimeZone(TimeZone.getTimeZone(zoneId));
         this.outputFormat = format;
         setupMetadataFields();
         setupWriter(outputFile);
@@ -190,16 +191,19 @@ public class ReportRunner {
                                 Map<String, Object> metadataFields = metadata.getExtraData();
                                 if (null != metadataFields) {
                                     Object fieldValue = getValueOfMetadataField(fieldName, metadataFields.get(fieldName));
-                                    if (null == fieldValue && this.outputFormat == OutputFormat.XLSX) {
+                                    if (null == fieldValue) {
                                         fieldValue = "";
                                     }
+                                    System.out.println("Field: " + fieldName + " Value: " + fieldValue + " Type: " + (null == fieldValue ? "null" : fieldValue.getClass().getSimpleName()));
                                     entryValues[i + reportConfig.getFileProperties().length] = fieldValue;
                                 } else {
                                     entryValues[i + reportConfig.getFileProperties().length] = this.outputFormat == OutputFormat.CSV ? null : "";
                                 }
                             }
                         }
-                        writer.writeRow(List.of(entryValues));
+                        System.out.println(entryValues);
+                        List listOfEntries  = List.of(entryValues);
+                        writer.writeRow(listOfEntries);
                     } else {
                         // Handle folder entries if needed
                         // For now, we are only processing file entries
