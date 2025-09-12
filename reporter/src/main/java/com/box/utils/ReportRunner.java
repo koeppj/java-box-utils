@@ -2,12 +2,19 @@ package com.box.utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.Time;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.stream.Stream;
@@ -33,11 +40,13 @@ public class ReportRunner {
     private Map<String, MetadataTemplateFieldsTypeField> metadataFieldTypes = new HashMap<String, MetadataTemplateFieldsTypeField>();
     private TabularWriter writer;
     private OutputFormat outputFormat;
+    private TimeZone timezone;
 
     public ReportRunner(ReportConfig reportConfig, BoxClient client, File outputFile, OutputFormat format, ZoneId zoneId) throws IOException {
         this.reportConfig = reportConfig;
         this.client = client;
         this.dateFormatter = new SimpleDateFormat(reportConfig.getDateFormat());
+        this.timezone = TimeZone.getTimeZone(zoneId);
         this.dateFormatter.setTimeZone(TimeZone.getTimeZone(zoneId));
         this.outputFormat = format;
         setupMetadataFields();
@@ -77,7 +86,10 @@ public class ReportRunner {
                     return rawValue.toString();
                 case DATE:
                     if (rawValue instanceof String) {
-                        Date date = Date.from(Instant.parse((String)rawValue));
+                        OffsetDateTime odt = OffsetDateTime.parse((CharSequence) rawValue); // e.g. 2035-12-31T00:00:00.000Z
+                        LocalDate localDate = odt.toLocalDate();                            // 2035-12-31
+                        ZoneId zone = ZoneId.systemDefault();                               // or ZoneId.of("America/New_York")
+                        Date date = Date.from(localDate.atStartOfDay(zone).toInstant());    // prints as 00:00:00 in local zone
                         return this.outputFormat == OutputFormat.CSV ? this.dateFormatter.format(date) : date;
                     }
                     return rawValue;
@@ -179,7 +191,7 @@ public class ReportRunner {
                         for (int i = 0; i < reportConfig.getFileProperties().length; i++) {
                             String propName = reportConfig.getFileProperties()[i];
                             Object propValue = jsonNodeToObject(fileFull.getRawData().get(propName));
-                            entryValues[i] = propValue;
+                            entryValues[i] = (null == propValue ? "" : propValue);
                         }
                         // now fill in the metadata fields
                         Map<String, MetadataFull> metadataForScope = fileFull.getMetadata().getExtraData()
@@ -191,19 +203,13 @@ public class ReportRunner {
                                 Map<String, Object> metadataFields = metadata.getExtraData();
                                 if (null != metadataFields) {
                                     Object fieldValue = getValueOfMetadataField(fieldName, metadataFields.get(fieldName));
-                                    if (null == fieldValue) {
-                                        fieldValue = "";
-                                    }
-                                    System.out.println("Field: " + fieldName + " Value: " + fieldValue + " Type: " + (null == fieldValue ? "null" : fieldValue.getClass().getSimpleName()));
-                                    entryValues[i + reportConfig.getFileProperties().length] = fieldValue;
+                                    entryValues[i + reportConfig.getFileProperties().length] = (null == fieldValue ? "" : fieldValue);
                                 } else {
-                                    entryValues[i + reportConfig.getFileProperties().length] = this.outputFormat == OutputFormat.CSV ? null : "";
+                                    entryValues[i + reportConfig.getFileProperties().length] = "";
                                 }
                             }
                         }
-                        System.out.println(entryValues);
-                        List listOfEntries  = List.of(entryValues);
-                        writer.writeRow(listOfEntries);
+                        writer.writeRow(List.of(entryValues));
                     } else {
                         // Handle folder entries if needed
                         // For now, we are only processing file entries
